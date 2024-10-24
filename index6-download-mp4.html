@@ -48,11 +48,33 @@
             display: none;
             margin-top: 20px;
         }
+		#timer-container {
+			position: fixed; /* 固定定位 */
+			bottom: 20px;    /* 距离底部20像素 */
+			right: 20px;     /* 距离右侧20像素 */
+			background-color: rgba(255, 255, 255, 0.8); /* 半透明背景 */
+			padding: 10px;   /* 内边距 */
+			border-radius: 8px; /* 圆角边框 */
+			box-shadow: 0 0 10px rgba(0, 0, 0, 0.5); /* 阴影效果 */
+			z-index: 1000; /* 确保在其他元素上方 */
+		}
+
+		#timer-container h2 {
+			margin: 0; /* 消除默认边距 */
+		}
+
+		#reset-timer-button {
+			margin-top: 5px; /* 上边距 */
+		}
     </style>
 </head>
 <body>
     <h1>Audio Stack</h1>
     
+	<div id="timer-container">
+		<h2>Clock: <span id="timer-display">00:00</span></h2>
+		<button id="reset-timer-button"><i class="fas fa-undo"></i> Reset Timer</button>
+	</div>
 
 	<div id="text-content">
 		<div class="text-block" data-time="0">Good morning, good day, and good afternoon to an all-new XC live stream.</div>
@@ -105,6 +127,8 @@
 	<audio id="recording-player" controls></audio>
 	<video id="video-player" style="display: none;" autoplay playsinline></video>
 	<video id="recording-video-player" style="display: none;" controls></video>
+
+
 	<!-- 用于显示全文 -->
 	<div id="full-text"></div> 
 	<!-- 用于显示复制的文本的堆栈 -->
@@ -155,6 +179,8 @@
 		let videoRecorder;               // Line: Insert near the top of the script section
 		let videoChunks = [];            // Line: Follow the previous line
 		let videoStream;
+		let timerInterval; // 定义计时器间隔
+		let seconds = 0; // 存储经过的秒数
 
 
 
@@ -446,6 +472,31 @@
                 copyText(selection.toString());
             }
         });
+		
+		// 启动计时器
+		function startTimer() {
+			timerInterval = setInterval(() => {
+				seconds++;
+				// 计算分钟和秒
+				const minutes = String(Math.floor(seconds / 60)).padStart(2, '0');
+				const secs = String(seconds % 60).padStart(2, '0');
+				document.getElementById('timer-display').textContent = `${minutes}:${secs}`;
+			}, 1000);
+		}
+
+		// 重置计时器
+		function resetTimer() {
+			clearInterval(timerInterval); // 清除计时器
+			seconds = 0; // 重置秒数
+			document.getElementById('timer-display').textContent = '00:00'; // 更新显示
+			startTimer(); // 重新启动计时器
+		}
+
+		// 自动启动计时器
+		startTimer();
+
+		// 添加重置按钮的事件监听器
+		document.getElementById('reset-timer-button').addEventListener('click', resetTimer);
 		
 		// 事件监听和快捷键功能保持不变
         document.addEventListener('keydown', (event) => {
