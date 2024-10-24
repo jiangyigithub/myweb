@@ -203,8 +203,9 @@
 					const day = String(date.getDate()).padStart(2, '0');
 					const hours = String(date.getHours()).padStart(2, '0');
 					const minutes = String(date.getMinutes()).padStart(2, '0');
-					const dateTimeString = `${year}-${month}-${day}-${hours}-${minutes}`; // 格式为 YYYY-MM-DD-HH-MM
-					const fileName = `video_${dateTimeString}.mp4`; // 构建文件名
+					const seconds = String(date.getSeconds()).padStart(2, '0');
+					const dateTimeString = `${year}${month}${day}-${hours}h${minutes}m${seconds}s`; // 格式为 YYYY-MM-DD-HH-MM-SS
+					const fileName = `video-${dateTimeString}.mp4`; // 构建文件名
 
 					const videoUrl = URL.createObjectURL(videoBlob);
 					// 设置下载按钮链接和文件名
