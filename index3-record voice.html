@@ -1,0 +1,275 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sync Text with Audio, Stack, and Recording</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        body {
+            display: flex;
+            justify-content: space-between;
+            padding: 20px;
+        }
+
+        #text-content {
+            display: none; /* 初始隐藏文本 */
+        }
+
+        .text-block {
+            display: none; /* 初始隐藏所有文本块 */
+        }
+
+        .current-text {
+            font-weight: bold; /* 当前文本加粗 */
+        }
+
+        button {
+            font-size: 16px;
+            margin: 5px;
+        }
+
+        #full-text {
+            display: none; /* 初始隐藏全文 */
+            margin-top: 20px;
+        }
+
+        #copied-stack {
+            margin-top: 20px;
+            border: 1px solid #ccc;
+            padding: 10px;
+            max-height: 300px;
+            overflow-y: auto;
+        }
+
+        .copied-item {
+            padding: 5px;
+            border-bottom: 1px solid #ddd;
+        }
+
+        #custom-text-input {
+            width: 300px;
+            height: 150px;
+            margin-left: 20px;
+            border: 1px solid #ccc;
+            padding: 10px;
+            resize: none;
+        }
+
+        #recording-player {
+            display: none;
+            margin-top: 20px;
+        }
+    </style>
+</head>
+<body>
+    <div>
+        <h1>Click to Play/Pause Audio</h1>
+        <audio id="audio-player" preload="auto"></audio>
+        <button id="play-pause-button"><i class="fas fa-play"></i> Play/Pause Audio (Q)</button>
+        <button id="next-audio-button" style="display:none;"><i class="fas fa-forward"></i> Next Audio (W)</button>
+        <button id="rewind-button" style="display:none;"><i class="fas fa-undo"></i> Rewind 5 Seconds (E)</button>
+        <button id="move-forward-button" style="display:none;"><i class="fas fa-forward"></i> Move Forward 1s (D)</button>
+        <button id="move-backward-button" style="display:none;"><i class="fas fa-undo"></i> Move Backward 1s (A)</button>
+        <button id="toggle-text-button" style="display:none;">Hide Text (R)</button>
+        <button id="show-full-text-button"><i class="fas fa-file-alt"></i> Show Full Text (T)</button>
+
+        <div id="copied-stack">
+            <h2>Highlight</h2>
+        </div>
+
+        <div id="full-text"></div> <!-- 用于显示全文 -->
+
+        <button id="start-record-button">Start Recording</button>
+        <button id="stop-record-button" style="display:none;">Stop Recording</button>
+        <audio id="recording-player" controls></audio>
+    </div>
+
+    <!-- 用户自定义的文本输入区域 -->
+    <textarea id="custom-text-input" placeholder="Your Text Input"></textarea>
+
+    <script>
+        const audioFiles = [
+            'audio/audio00.wav', 
+            'audio/audio01.wav'
+        ];
+        let currentAudioIndex = 0;
+        let lastTextIndex = -1;
+        let isPlaying = false;
+
+        // 获取元素
+        const textContent = document.getElementById('text-content');
+        const textBlocks = document.querySelectorAll('.text-block');
+        const audioPlayer = document.getElementById('audio-player');
+        const playPauseButton = document.getElementById('play-pause-button');
+        const nextAudioButton = document.getElementById('next-audio-button');
+        const rewindButton = document.getElementById('rewind-button');
+        const moveForwardButton = document.getElementById('move-forward-button');
+        const moveBackwardButton = document.getElementById('move-backward-button');
+        const toggleTextButton = document.getElementById('toggle-text-button');
+        const fullTextDiv = document.getElementById('full-text');
+        const showFullTextButton = document.getElementById('show-full-text-button');
+        const copiedStack = document.getElementById('copied-stack');
+        const recordingPlayer = document.getElementById('recording-player');
+        let mediaRecorder;
+        let audioChunks = [];
+
+        // 切换播放和暂停
+        function togglePlayPause() {
+            if (isPlaying) {
+                audioPlayer.pause();
+                playPauseButton.innerHTML = '<i class="fas fa-play"></i> Play Audio (Q)';
+            } else {
+                if (audioPlayer.src === '' || audioPlayer.ended) {
+                    audioPlayer.src = audioFiles[currentAudioIndex];
+                }
+                audioPlayer.play();
+                playPauseButton.innerHTML = '<i class="fas fa-pause"></i> Pause Audio (Q)';
+                
+                // 显示文本内容和隐藏文本按钮
+                textContent.style.display = 'block';
+                toggleTextButton.style.display = 'inline';
+
+                // 显示“播放下一个音频”和“回退5秒”按钮
+                nextAudioButton.style.display = 'inline';
+                rewindButton.style.display = 'inline';
+                moveForwardButton.style.display = 'inline';
+                moveBackwardButton.style.display = 'inline';
+            }
+            isPlaying = !isPlaying;
+        }
+
+        // 播放下一个音频
+        function playNextAudio() {
+            currentAudioIndex = (currentAudioIndex + 1) % audioFiles.length;
+            audioPlayer.src = audioFiles[currentAudioIndex];
+            audioPlayer.play();
+            playPauseButton.innerHTML = '<i class="fas fa-pause"></i> Pause Audio (Q)';
+            isPlaying = true;
+            lastTextIndex = -1; // 重置文本索引
+            highlightCurrentText();
+        }
+
+        // 回退5秒
+        function rewindAudio() {
+            audioPlayer.currentTime = Math.max(0, audioPlayer.currentTime - 5);
+        }
+
+        // 向前移动1秒
+        function moveForward() {
+            audioPlayer.currentTime = Math.min(audioPlayer.duration, audioPlayer.currentTime + 1);
+        }
+
+        // 向后移动1秒
+        function moveBackward() {
+            audioPlayer.currentTime = Math.max(0, audioPlayer.currentTime - 1);
+        }
+
+        // 切换文本显示
+        function toggleText() {
+            if (textContent.style.display === 'none') {
+                textContent.style.display = 'block';
+                toggleTextButton.textContent = 'Hide Text (R)';
+            } else {
+                textContent.style.display = 'none';
+                toggleTextButton.textContent = 'Show Text (R)';
+            }
+        }
+
+        // 显示全文
+        function showFullText() {
+            if (fullTextDiv.style.display === 'none' || fullTextDiv.style.display === '') {
+                fullTextDiv.style.display = 'block';
+                fullTextDiv.innerHTML = Array.from(textBlocks).map(block => block.textContent).join('<br>');
+                showFullTextButton.textContent = 'Hide Full Text (T)';
+            } else {
+                fullTextDiv.style.display = 'none';
+                showFullTextButton.textContent = 'Show Full Text (T)';
+            }
+        }
+
+        // 高亮当前文本
+        function highlightCurrentText() {
+            for (let i = 0; i < textBlocks.length; i++) {
+                textBlocks[i].classList.remove('current-text');
+                if (audioPlayer.currentTime >= textBlocks[i].dataset.time) {
+                    textBlocks[i].classList.add('current-text');
+                    lastTextIndex = i;
+                }
+            }
+        }
+
+        // 开始录音
+        function startRecording() {
+            navigator.mediaDevices.getUserMedia({ audio: true })
+                .then(stream => {
+                    mediaRecorder = new MediaRecorder(stream);
+                    mediaRecorder.start();
+
+                    mediaRecorder.ondataavailable = event => {
+                        audioChunks.push(event.data);
+                    };
+
+                    mediaRecorder.onstop = () => {
+                        const audioBlob = new Blob(audioChunks, { type: 'audio/wav' });
+                        const audioUrl = URL.createObjectURL(audioBlob);
+                        recordingPlayer.src = audioUrl;
+                        recordingPlayer.style.display = 'block';
+                        audioChunks = []; // 重置音频块
+                    };
+                });
+
+            document.getElementById('start-record-button').style.display = 'none';
+            document.getElementById('stop-record-button').style.display = 'inline';
+        }
+
+        // 停止录音
+        function stopRecording() {
+            mediaRecorder.stop();
+            document.getElementById('stop-record-button').style.display = 'none';
+            document.getElementById('start-record-button').style.display = 'inline';
+        }
+
+        // 事件监听
+        playPauseButton.addEventListener('click', togglePlayPause);
+        nextAudioButton.addEventListener('click', playNextAudio);
+        rewindButton.addEventListener('click', rewindAudio);
+        moveForwardButton.addEventListener('click', moveForward);
+        moveBackwardButton.addEventListener('click', moveBackward);
+        toggleTextButton.addEventListener('click', toggleText);
+        showFullTextButton.addEventListener('click', showFullText);
+
+        document.getElementById('start-record-button').addEventListener('click', startRecording);
+        document.getElementById('stop-record-button').addEventListener('click', stopRecording);
+
+        // 键盘快捷键绑定
+        document.addEventListener('keydown', function (event) {
+            switch (event.key.toLowerCase()) {
+                case 'q':
+                    togglePlayPause();
+                    break;
+                case 'w':
+                    playNextAudio();
+                    break;
+                case 'e':
+                    rewindAudio();
+                    break;
+                case 'd':
+                    moveForward();
+                    break;
+                case 'a':
+                    moveBackward();
+                    break;
+                case 'r':
+                    toggleText();
+                    break;
+                case 't':
+                    showFullText();
+                    break;
+                default:
+                    break;
+            }
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,486 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Audio and Stack</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        #text-content {
+            display: none; /* 初始隐藏文本 */
+        }
+        .text-block {
+            display: none; /* 初始隐藏所有文本块 */
+        }
+        .current-text {
+            font-weight: bold; /* 当前文本加粗 */
+        }
+        button {
+            font-size: 16px;
+            margin: 5px;
+        }
+        #full-text {
+            display: none; /* 初始隐藏全文 */
+            margin-top: 20px;
+        }
+        #copied-stack {
+            margin-top: 20px;
+            border: 1px solid #ccc;
+            padding: 10px;
+            max-height: 300px;
+            overflow-y: auto;
+        }
+        .copied-item {
+            padding: 5px;
+            border-bottom: 1px solid #ddd;
+        }
+        #note-section {
+            margin-top: 20px;
+        }
+        #note-input {
+            width: 100%;
+            height: 300px; /* 设置输入框高度，确保是长方形 */
+            box-sizing: border-box;
+            padding: 10px;
+            font-size: 16px;
+        }
+        #audio-player {
+            display: none;
+            margin-top: 20px;
+        }
+    </style>
+</head>
+<body>
+    <h1>Audio Stack</h1>
+    
+
+	<div id="text-content">
+		<div class="text-block" data-time="0">Good morning, good day, and good afternoon to an all-new XC live stream.</div>
+		<div class="text-block" data-time="5">It's our third, and we welcome you very much to today's session.</div>
+		<div class="text-block" data-time="10">So, let's have a look at what we are up to today and how we want to proceed.</div>
+		<div class="text-block" data-time="18">We will have first a business update with the current situation and how we are moving forward until the end of this year closure but also into the next year.</div>
+		<div class="text-block" data-time="26">This will be followed by an intense round of Q&A's.</div>
+		<div class="text-block" data-time="31">Expect a lot of questions from your side on how we are navigating through these turbulent times.</div>
+		<div class="text-block" data-time="36">Now, let's have a look at the outside-in perspective and what we currently see in the market.</div>
+		<div class="text-block" data-time="44">We need to acknowledge that markets and respective regions are not getting more stable, affecting our current development of our business.</div>
+		<div class="text-block" data-time="52">The complete automotive business, especially in our domains, is also softening quite significantly,</div>
+		<div class="text-block" data-time="60">and we had to react in terms of our prognosis for TNS and our revenue going forward.</div>
+		<div class="text-block" data-time="68">What does this mean exactly? It means that we have a very different view across the regions,</div>
+		<div class="text-block" data-time="76">with China really growing strong as an overall region, but only from export, not within China.</div>
+		<div class="text-block" data-time="84">In China, we see a heavy price war that is really continuing, even reaching disastrous price levels.</div>
+		<div class="text-block" data-time="92">And, of course, margin and profit possibilities across the globe,</div>
+		<div class="text-block" data-time="100">with Europe and North America obviously softening markets, mean that we are currently really in a turmoil of profitability when it comes to how to reach our markets.</div>
+		<div class="text-block" data-time="108">The shift of EE architectures, the shift of electrification, and the shift of autonomy all strike us pretty hard,</div>
+		<div class="text-block" data-time="116">and we had to adjust our current planning.</div>
+		<div class="text-block" data-time="124">Stefan will guide you through this in just a second.</div>
+		<div class="text-block" data-time="132">If we compare it to the hype cycle, we are currently really driving down into the trough of disillusionment.</div>
+		<div class="text-block" data-time="140">We need to acknowledge that we currently don't know how the markets will evolve in the next twelve to twenty-four months.</div>
+		<div class="text-block" data-time="148">This means that we need to make ourselves fit, robust, and adaptive enough to move into the next couple of quarters.</div>
+		<div class="text-block" data-time="156">We still believe and we strongly still invest in our future of ADAS compute,</div>
+		<div class="text-block" data-time="164">and we also see sustainable progress in terms of our levers of TNS and profitability.</div>
+		<div class="text-block" data-time="172">So, we need to keep on this fight, and we are fully committed to what we do</div>
+		<div class="text-block" data-time="177">and how we want to really build our future together in the regions,</div>
+		<div class="text-block" data-time="182">but really also in the respective global footprint.</div>
+	</div>
+
+
+    <audio id="audio-player" preload="auto"></audio>
+    <button id="play-pause-button"><i class="fas fa-play"></i> Play/Pause Audio (Q/Alt)</button>
+	<button id="toggle-text-button" style="display:none;"><i class="fas fa-file-alt"></i> Show Text (W)</button> <!-- 默认隐藏文本按钮 -->
+    <button id="rewind-button" style="display:none;"><i class="fas fa-undo"></i> Rewind (E)</button>
+	<button id="move-backward-button" style="display:none;"><i class="fas fa-undo"></i> Move Backward 5s (D/Fn)</button> <!-- Thinkpad set Fn as Ctrl key -->
+    <button id="move-forward-button" style="display:none;"><i class="fas fa-forward"></i> Move Forward 5s (F)</button>
+    <button id="next-audio-button" style="display:none;"><i class="fas fa-forward"></i> Next Audio (R)</button>
+    <button id="show-full-text-button"><i class="fas fa-file-alt"></i> Show Full Text (T)</button>
+	<button id="start-record-button"><i class="fas fa-microphone"></i> Speak Aloud (Y)</button>
+	<button id="stop-record-button" style="display:none;"><i class="fas fa-microphone"></i> Stop Recording (Y)</button>
+	<!-- Video Recording Buttons and Player (Add near the bottom of the body) -->
+	<button id="start-video-record-button"><i class="fas fa-video"></i> Start Video Recording (V)</button> <!-- Line: Add at the bottom of the body section -->
+	<button id="stop-video-record-button" style="display:none;"><i class="fas fa-video-slash"></i> Stop Video Recording (V)</button> <!-- Line: Follow the previous line -->
+	
+
+    
+	<!-- 用于显示录音 -->
+	<audio id="audio-player" controls></audio>
+	<video id="video-player" style="display: none;" autoplay playsinline></video>
+	<video id="recording-video-player" style="display: none;" controls></video>
+	<!-- 用于显示全文 -->
+	<div id="full-text"></div> 
+	<!-- 用于显示复制的文本的堆栈 -->
+	<div id="copied-stack" style="display: none;">
+		<h2>highlight note</h2>
+	</div>
+
+
+  
+    <!-- 文本输入区域 -->
+    <div id="note-section">
+        <h2>type content</h2>
+        <textarea id="note-input" placeholder="Type your content here..."></textarea>
+    </div>
+
+    <script>
+
+
+        const audioFiles = [
+            'audio/audio00.wav', 
+            'audio/audio01.wav'
+        ];
+        let currentAudioIndex = 0;
+        let lastTextIndex = -1;
+        let isPlaying = false;
+
+        // 获取元素
+        const textContent = document.getElementById('text-content');
+        const textBlocks = document.querySelectorAll('.text-block');
+        const audioPlayer = document.getElementById('audio-player');
+        const playPauseButton = document.getElementById('play-pause-button');
+        const nextAudioButton = document.getElementById('next-audio-button');
+        const rewindButton = document.getElementById('rewind-button');
+        const moveForwardButton = document.getElementById('move-forward-button');
+        const moveBackwardButton = document.getElementById('move-backward-button');
+        const toggleTextButton = document.getElementById('toggle-text-button');
+        const fullTextDiv = document.getElementById('full-text');
+        const showFullTextButton = document.getElementById('show-full-text-button');
+        const copiedStack = document.getElementById('copied-stack');
+		const recordingPlayer = document.getElementById('audio-player');
+        let mediaRecorder;
+        let audioChunks = [];
+		let globalStream = null; // 全局变量保存音频流
+		
+		// At the top of your JavaScript section, declare new variables
+		let videoRecorder;               // Line: Insert near the top of the script section
+		let videoChunks = [];            // Line: Follow the previous line
+		let videoStream;
+
+
+
+		// Request video permissions on page load
+		document.addEventListener('DOMContentLoaded', () => {
+			navigator.mediaDevices.getUserMedia({ video: true, audio: true })
+				.then(stream => {
+					videoStream = stream; // Save video stream to global variable
+					globalStream = stream; // 保存音频流到全局变量
+					console.log('Video permission granted.');
+				})
+				.catch(error => {
+					console.error('Video permission denied:', error);
+				});
+		}); // Line: Add this block after your current DOMContentLoaded if it exists, otherwise create a new one
+
+		
+		// Add start video recording function
+		function startVideoRecording() {
+			if (videoStream) {
+				const videoPlayer = document.getElementById('video-player');
+				videoPlayer.style.display = 'block'; // 显示摄像头画面
+				videoPlayer.srcObject = videoStream;  // 绑定视频流
+
+				// 确保视频播放
+				videoPlayer.play();
+
+				videoRecorder = new MediaRecorder(videoStream);
+				videoRecorder.start();
+
+				videoRecorder.ondataavailable = event => {
+					videoChunks.push(event.data);
+				};
+
+				videoRecorder.onstop = () => {
+					const videoBlob = new Blob(videoChunks, { type: 'video/mp4' });
+					
+					// 使用当前日期和时间生成文件名，精确到分钟，使用 "-" 连接
+					const date = new Date();
+					const year = date.getFullYear();
+					const month = String(date.getMonth() + 1).padStart(2, '0');
+					const day = String(date.getDate()).padStart(2, '0');
+					const hours = String(date.getHours()).padStart(2, '0');
+					const minutes = String(date.getMinutes()).padStart(2, '0');
+					const dateTimeString = `${year}-${month}-${day}-${hours}-${minutes}`; // 格式为 YYYY-MM-DD-HH-MM
+					const fileName = `video_${dateTimeString}.mp4`; // 构建文件名
+
+					const videoUrl = URL.createObjectURL(videoBlob);
+
+					// 停止显示摄像头画面，显示录制的视频
+					videoPlayer.style.display = 'none'; // 隐藏摄像头画面
+					const recordedVideoPlayer = document.getElementById('recording-video-player');
+					recordedVideoPlayer.src = videoUrl; // 显示录制的视频
+					recordedVideoPlayer.style.display = 'block'; // 显示录制的视频
+					// recordedVideoPlayer.play(); // 播放录制的视频
+
+					// 清空已录制的视频块
+					videoChunks = [];
+				};
+
+				document.getElementById('start-video-record-button').style.display = 'none';
+				document.getElementById('stop-video-record-button').style.display = 'inline';
+			} else {
+				console.error('Video stream not available.');
+			}
+		}
+
+
+
+
+		// Add stop video recording function
+		function stopVideoRecording() {
+			videoRecorder.stop();
+			document.getElementById('stop-video-record-button').style.display = 'none';
+			document.getElementById('start-video-record-button').style.display = 'inline';
+		}
+
+		
+		// 切换播放和暂停
+		function togglePlayPause() {
+			if (isPlaying) {
+				audioPlayer.pause();
+				playPauseButton.innerHTML = '<i class="fas fa-play"></i> Play Audio (Q/Alt)';
+			} else {
+				if (audioPlayer.src === '' || audioPlayer.ended) {
+					audioPlayer.src = audioFiles[currentAudioIndex];
+				}
+				audioPlayer.play();
+				playPauseButton.innerHTML = '<i class="fas fa-pause"></i> Pause Audio (Q/Alt)';
+
+				// 确保文本内容默认隐藏
+				textContent.style.display = 'none';
+				
+
+				// 显示“播放下一个音频”和“回退5秒”按钮
+				toggleTextButton.style.display = 'inline'; // 隐藏文本切换按钮
+				nextAudioButton.style.display = 'inline';
+				rewindButton.style.display = 'inline';
+				moveForwardButton.style.display = 'inline';
+				moveBackwardButton.style.display = 'inline';
+			}
+			isPlaying = !isPlaying;
+		}
+
+        // 播放下一个音频
+        function playNextAudio() {
+            if (currentAudioIndex < audioFiles.length - 1) {
+                currentAudioIndex++;
+                audioPlayer.src = audioFiles[currentAudioIndex];
+                audioPlayer.play();
+                isPlaying = true;
+                playPauseButton.innerHTML = '<i class="fas fa-pause"></i> Pause Audio (Q)';
+            } else {
+                // 重置到第一个音频
+                currentAudioIndex = 0;
+                audioPlayer.src = audioFiles[currentAudioIndex];
+                audioPlayer.play();
+                isPlaying = true;
+                playPauseButton.innerHTML = '<i class="fas fa-pause"></i> Pause Audio (Q)';
+            }
+        }
+
+        // 回退到0秒
+        function rewindAudio() {
+            audioPlayer.currentTime = 0;
+            updateText(audioPlayer.currentTime);
+        }
+
+        // 向前移动5秒
+        function moveForward() {
+            audioPlayer.currentTime = Math.min(audioPlayer.duration, audioPlayer.currentTime + 5);
+            updateText(audioPlayer.currentTime);
+        }
+
+        // 向后移动5秒
+        function moveBackward() {
+            audioPlayer.currentTime = Math.max(0, audioPlayer.currentTime - 5);
+            updateText(audioPlayer.currentTime);
+        }
+
+		
+		// 切换文本显示
+        function toggleText() {
+            if (textContent.style.display === 'none') {
+                textContent.style.display = 'block';
+                toggleTextButton.textContent = 'Hide Text (W)'; // 切换按钮文本
+            } else {
+                textContent.style.display = 'none';
+                toggleTextButton.textContent = 'Show Text (W)'; // 切换按钮文本
+            }
+        }
+
+        // 显示全文
+		function showFullText() {
+			if (fullTextDiv.style.display === 'none' || fullTextDiv.style.display === '') {
+				fullTextDiv.style.display = 'block';
+				fullTextDiv.innerHTML = Array.from(textBlocks).map(block => block.textContent).join('<br>');
+				showFullTextButton.textContent = 'Hide Full Text (T)';
+				
+				// 当显示全文时，显示 highlight note 区域
+				copiedStack.style.display = 'block';
+			} else {
+				fullTextDiv.style.display = 'none';
+				showFullTextButton.textContent = 'Show Full Text (T)';
+				
+				// 隐藏 highlight note 区域
+				copiedStack.style.display = 'none';
+			}
+		}
+
+
+        // 更新文本显示
+        function updateText(currentTime) {
+            textBlocks.forEach((block, index) => {
+                if (currentTime >= parseFloat(block.dataset.time)) {
+                    block.style.display = 'block';
+                    if (lastTextIndex !== index) {
+                        if (lastTextIndex !== -1) {
+                            textBlocks[lastTextIndex].classList.remove('current-text');
+                        }
+                        block.classList.add('current-text');
+                        lastTextIndex = index;
+                    }
+                } else {
+                    block.style.display = 'none';
+                }
+            });
+        }
+
+        // 文本复制监听
+        function copyText(text) {
+            const copiedItem = document.createElement('div');
+            copiedItem.classList.add('copied-item');
+            copiedItem.textContent = text;
+            
+            // 将新的复制项添加到堆栈顶部
+            copiedStack.insertBefore(copiedItem, copiedStack.firstChild);
+        }
+		
+		// 开始录音
+		function startRecording() {
+			if (globalStream) {
+				mediaRecorder = new MediaRecorder(globalStream); // 使用已保存的音频流
+				mediaRecorder.start();
+
+				mediaRecorder.ondataavailable = event => {
+					audioChunks.push(event.data);
+				};
+
+				mediaRecorder.onstop = () => {
+					const audioBlob = new Blob(audioChunks, { type: 'audio/wav' });
+					const audioUrl = URL.createObjectURL(audioBlob);
+					recordingPlayer.src = audioUrl;
+					recordingPlayer.style.display = 'block';
+					audioChunks = []; // 重置音频块
+				};
+
+				document.getElementById('start-record-button').style.display = 'none';
+				document.getElementById('stop-record-button').style.display = 'inline';
+			} else {
+				console.error('Audio stream not available.');
+			}
+		}
+
+        // 停止录音
+        function stopRecording() {
+            mediaRecorder.stop();
+            document.getElementById('stop-record-button').style.display = 'none';
+            document.getElementById('start-record-button').style.display = 'inline';
+        }
+
+        // 事件监听
+        playPauseButton.addEventListener('click', togglePlayPause);
+        nextAudioButton.addEventListener('click', playNextAudio);
+        rewindButton.addEventListener('click', rewindAudio);
+        moveForwardButton.addEventListener('click', moveForward);
+        moveBackwardButton.addEventListener('click', moveBackward);
+        toggleTextButton.addEventListener('click', toggleText);
+        showFullTextButton.addEventListener('click', showFullText);
+		document.getElementById('start-record-button').addEventListener('click', startRecording);
+        document.getElementById('stop-record-button').addEventListener('click', stopRecording);
+		// Add event listeners for buttons
+		document.getElementById('start-video-record-button').addEventListener('click', startVideoRecording);
+		document.getElementById('stop-video-record-button').addEventListener('click', stopVideoRecording); // Line: Place in your existing event listeners section
+        
+
+
+        // 更新文本显示
+        audioPlayer.addEventListener('timeupdate', () => {
+            updateText(audioPlayer.currentTime);
+        });
+
+        // 文本内容的复制监听
+        document.addEventListener('copy', (event) => {
+            const selection = document.getSelection();
+            if (selection && selection.toString()) {
+                // 复制内容送到堆栈
+                copyText(selection.toString());
+            }
+        });
+		
+		// 事件监听和快捷键功能保持不变
+        document.addEventListener('keydown', (event) => {
+		    // Alt 键始终用于播放/暂停音频
+			if (event.altKey) {
+				event.preventDefault(); // 为了避免 Alt 键让网页处于不激活状态
+				togglePlayPause();
+				return; // 终止其他快捷键处理
+			}
+			
+			if (event.ctrlKey) {
+				event.preventDefault(); // 为了避免让网页处于不激活状态
+				audioPlayer.currentTime = Math.max(0, audioPlayer.currentTime - 5);
+				return; // 终止其他快捷键处理
+			}
+			
+		    // 如果焦点在输入框中，则不处理快捷键
+			if (event.target.tagName.toLowerCase() === 'input' || event.target.tagName.toLowerCase() === 'textarea') {
+				return;
+			}
+            switch (event.key.toLowerCase()) {
+			
+                case 'q':
+                    togglePlayPause();
+                    break;
+                case 'r':
+                    if (currentAudioIndex < audioFiles.length - 1) {
+                        currentAudioIndex++;
+                        audioPlayer.src = audioFiles[currentAudioIndex];
+                        audioPlayer.play();
+                        isPlaying = true;
+                        playPauseButton.innerHTML = '<i class="fas fa-pause"></i> Pause Audio (Q)';
+                    }
+                    break;
+                case 'e':
+                    audioPlayer.currentTime = 0;
+                    break;
+                case 'f':
+                    audioPlayer.currentTime = Math.min(audioPlayer.duration, audioPlayer.currentTime + 5);
+                    break;
+                case 'd':
+                    audioPlayer.currentTime = Math.max(0, audioPlayer.currentTime - 5);
+                    break;
+                case 'w':
+                    toggleTextButton.click();
+                    break;
+                case 't':
+                    showFullTextButton.click();
+                    break;
+				case 'y': // 添加 Y 键的处理
+					if (document.getElementById('start-record-button').style.display !== 'none') {
+						startRecording();
+					} else {
+						stopRecording();
+					}
+					break;
+				case 'v':
+					if (document.getElementById('start-video-record-button').style.display !== 'none') {
+						startVideoRecording();
+					} else {
+						stopVideoRecording();
+					}
+                default:
+                    break;
+            }
+        });
+
+        // 初始化
+        audioPlayer.src = audioFiles[currentAudioIndex];
+    </script>
+</body>
+</html>

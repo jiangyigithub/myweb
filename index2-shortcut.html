@@ -1,0 +1,213 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sync Text with Audio</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        #text-content {
+            display: none; /* 初始隐藏文本 */
+        }
+        .text-block {
+            display: none; /* 初始隐藏所有文本块 */
+        }
+        .current-text {
+            font-weight: bold; /* 当前文本加粗 */
+        }
+        button {
+            font-size: 16px;
+            margin: 5px;
+        }
+    </style>
+</head>
+<body>
+    <h1>Click to Play/Pause Audio</h1>
+    
+	<div id="text-content">
+		<div class="text-block" data-time="0">Good morning, good day, and good afternoon to an all-new XC live stream.</div>
+		<div class="text-block" data-time="5">It's our third, and we welcome you very much to today's session.</div>
+		<div class="text-block" data-time="10">So, let's have a look at what we are up to today and how we want to proceed.</div>
+		<div class="text-block" data-time="15">We will have first a business update with the current situation and how we are moving forward until the end of this year closure but also into the next year.</div>
+		<div class="text-block" data-time="20">This will be followed by an intense round of Q&A's.</div>
+		<div class="text-block" data-time="25">Expect a lot of questions from your side on how we are navigating through these turbulent times.</div>
+		<div class="text-block" data-time="30">Now, let's have a look at the outside-in perspective and what we currently see in the market.</div>
+		<div class="text-block" data-time="35">We need to acknowledge that markets and respective regions are not getting more stable, affecting our current development of our business.</div>
+		<div class="text-block" data-time="40">The complete automotive business, especially in our domains, is also softening quite significantly.</div>
+		<div class="text-block" data-time="45">We had to react in terms of our prognosis for TNS and our revenue going forward.</div>
+		<div class="text-block" data-time="50">What does this mean exactly?</div>
+		<div class="text-block" data-time="55">It means that we have a very different view across the regions, with China really growing strong as an overall region, but only from export, not within China.</div>
+		<div class="text-block" data-time="60">In China, we see a heavy price war that is really continuing, even reaching disastrous price levels.</div>
+		<div class="text-block" data-time="65">And, of course, margin and profit possibilities across the globe are affected, with Europe and North America obviously softening markets.</div>
+		<div class="text-block" data-time="70">This means that we are currently really in a turmoil of profitability when it comes to how to reach our markets.</div>
+		<div class="text-block" data-time="75">The shift of EE architectures, the shift of electrification, and the shift of autonomy all strike us pretty hard, and we had to adjust our current planning.</div>
+		<div class="text-block" data-time="80">Stefan will guide you through this in just a second.</div>
+		<div class="text-block" data-time="85">If we compare it to the hype cycle, we are currently really driving down into the trough of disillusionment.</div>
+		<div class="text-block" data-time="90">We need to acknowledge that we currently don't know how the markets will evolve in the next twelve to twenty-four months.</div>
+		<div class="text-block" data-time="95">This means that we need to make ourselves fit, robust, and adaptive enough to move into the next couple of quarters.</div>
+		<div class="text-block" data-time="100">We still believe and we strongly still invest in our future of ADAS compute.</div>
+		<div class="text-block" data-time="105">We also see sustainable progress in terms of our levers of TNS and profitability.</div>
+		<div class="text-block" data-time="110">So, we need to keep on this fight, and we are fully committed to what we do.</div>
+		<div class="text-block" data-time="115">We want to really build our future together in the regions, but really also in the respective global footprint.</div>
+	</div>
+
+    
+    <audio id="audio-player" preload="auto"></audio>
+    <button id="play-pause-button"><i class="fas fa-play"></i> Play/Pause Audio (Q)</button>
+    <button id="next-audio-button" style="display:none;"><i class="fas fa-forward"></i> Next Audio (W)</button>
+    <button id="rewind-button" style="display:none;"><i class="fas fa-undo"></i> Rewind 5 Seconds (E)</button>
+    <button id="toggle-text-button" style="display:none;">Hide Text (R)</button>
+
+    <script>
+        const audioFiles = [
+            'audio/audio00.wav', 
+            'audio/audio01.wav'
+        ];
+        let currentAudioIndex = 0;
+        let lastTextIndex = -1;
+        let isPlaying = false;
+
+        // 获取元素
+        const textContent = document.getElementById('text-content');
+        const textBlocks = document.querySelectorAll('.text-block');
+        const audioPlayer = document.getElementById('audio-player');
+        const playPauseButton = document.getElementById('play-pause-button');
+        const nextAudioButton = document.getElementById('next-audio-button');
+        const rewindButton = document.getElementById('rewind-button');
+        const toggleTextButton = document.getElementById('toggle-text-button');
+
+        // 切换播放和暂停
+        function togglePlayPause() {
+            if (isPlaying) {
+                audioPlayer.pause();
+                playPauseButton.innerHTML = '<i class="fas fa-play"></i> Play Audio (Q)';
+            } else {
+                if (audioPlayer.src === '' || audioPlayer.ended) {
+                    audioPlayer.src = audioFiles[currentAudioIndex];
+                }
+                audioPlayer.play();
+                playPauseButton.innerHTML = '<i class="fas fa-pause"></i> Pause Audio (Q)';
+                
+                // 显示文本内容和隐藏文本按钮
+                textContent.style.display = 'block';
+                toggleTextButton.style.display = 'inline';
+
+                // 显示“播放下一个音频”和“回退5秒”按钮
+                nextAudioButton.style.display = 'inline';
+                rewindButton.style.display = 'inline';
+            }
+            isPlaying = !isPlaying;
+        }
+
+        // 播放下一个音频
+        function playNextAudio() {
+            if (currentAudioIndex < audioFiles.length - 1) {
+                currentAudioIndex++;
+                audioPlayer.src = audioFiles[currentAudioIndex];
+                audioPlayer.play();
+                isPlaying = true;
+                playPauseButton.innerHTML = '<i class="fas fa-pause"></i> Pause Audio (Q)';
+            } else {
+                // 重置到第一个音频
+                currentAudioIndex = 0;
+                audioPlayer.pause();
+                playPauseButton.innerHTML = '<i class="fas fa-play"></i> Play Audio (Q)';
+                isPlaying = false;
+            }
+        }
+
+        // 回退5秒
+        function rewindAudio() {
+            audioPlayer.currentTime = Math.max(0, audioPlayer.currentTime - 5);
+            updateText(audioPlayer.currentTime);
+        }
+
+        // 切换文本显示/隐藏
+        function toggleText() {
+            if (textContent.style.display === 'none') {
+                textContent.style.display = 'block';
+                toggleTextButton.textContent = 'Hide Text (R)';
+            } else {
+                textContent.style.display = 'none';
+                toggleTextButton.textContent = 'Show Text (R)';
+            }
+        }
+
+        // 音频结束后自动播放下一个
+        audioPlayer.addEventListener('ended', () => {
+            if (currentAudioIndex < audioFiles.length - 1) {
+                currentAudioIndex++;
+                audioPlayer.src = audioFiles[currentAudioIndex];
+                audioPlayer.play();
+            } else {
+                currentAudioIndex = 0;
+                playPauseButton.innerHTML = '<i class="fas fa-play"></i> Play Audio (Q)';
+                isPlaying = false;
+            }
+        });
+
+        // 同步文本
+        audioPlayer.addEventListener('timeupdate', () => {
+            const currentTime = audioPlayer.currentTime;
+            updateText(currentTime);
+        });
+
+        // 更新文本
+        function updateText(currentTime) {
+            let currentTextIndex = -1;
+
+            textBlocks.forEach((block, index) => {
+                const blockTime = parseFloat(block.getAttribute('data-time'));
+                if (blockTime <= currentTime) {
+                    currentTextIndex = index;
+                }
+            });
+
+            if (currentTextIndex !== lastTextIndex) {
+                hideAllText();
+                if (currentTextIndex !== -1) {
+                    textBlocks[currentTextIndex].classList.add('current-text');
+                    textBlocks[currentTextIndex].style.display = 'block';
+                }
+                if (currentTextIndex > 0) {
+                    textBlocks[currentTextIndex - 1].classList.remove('current-text');
+                    textBlocks[currentTextIndex - 1].style.display = 'block';
+                }
+                lastTextIndex = currentTextIndex;
+            }
+        }
+
+        // 隐藏所有文本块
+        function hideAllText() {
+            textBlocks.forEach(block => {
+                block.style.display = 'none';
+                block.classList.remove('current-text');
+            });
+        }
+
+        // 键盘事件监听
+        document.addEventListener('keydown', function(event) {
+            switch (event.key.toLowerCase()) {
+                case 'q': // Q键用于播放/暂停
+                    togglePlayPause();
+                    break;
+                case 'w': // W键用于播放下一个音频
+                    playNextAudio();
+                    break;
+                case 'e': // E键用于回退5秒
+                    rewindAudio();
+                    break;
+                case 'r': // R键用于切换文本显示/隐藏
+                    toggleText();
+                    break;
+            }
+        });
+
+        // 绑定按钮事件
+        playPauseButton.addEventListener('click', togglePlayPause);
+        nextAudioButton.addEventListener('click', playNextAudio);
+        rewindButton.addEventListener('click', rewindAudio);
+        toggleTextButton.addEventListener('click', toggleText);
+    </script>
+</body>
+</html>
