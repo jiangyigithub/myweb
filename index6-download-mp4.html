@@ -173,7 +173,9 @@
 		function startVideoRecording() {
 			if (videoStream) {
 				const videoPlayer = document.getElementById('video-player');
+				const recordedVideoPlayer = document.getElementById('recording-video-player');
 				videoPlayer.style.display = 'block'; // 显示摄像头画面
+				recordedVideoPlayer.style.display = 'none'; // 隐藏录制的视频
 				videoPlayer.srcObject = videoStream;  // 绑定视频流
 
 				// 确保视频播放
@@ -203,7 +205,7 @@
 
 					// 停止显示摄像头画面，显示录制的视频
 					videoPlayer.style.display = 'none'; // 隐藏摄像头画面
-					const recordedVideoPlayer = document.getElementById('recording-video-player');
+					
 					recordedVideoPlayer.src = videoUrl; // 显示录制的视频
 					recordedVideoPlayer.style.display = 'block'; // 显示录制的视频
 					// recordedVideoPlayer.play(); // 播放录制的视频
