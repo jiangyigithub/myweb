@@ -44,7 +44,7 @@
             padding: 10px;
             font-size: 16px;
         }
-        #audio-player {
+        #recording-player {
             display: none;
             margin-top: 20px;
         }
@@ -101,7 +101,7 @@
 
     
 	<!-- 用于显示录音 -->
-	<audio id="audio-player" controls></audio>
+	<audio id="recording-player" controls></audio>
 	<video id="video-player" style="display: none;" autoplay playsinline></video>
 	<video id="recording-video-player" style="display: none;" controls></video>
 	<!-- 用于显示全文 -->
@@ -143,10 +143,10 @@
         const fullTextDiv = document.getElementById('full-text');
         const showFullTextButton = document.getElementById('show-full-text-button');
         const copiedStack = document.getElementById('copied-stack');
-		const recordingPlayer = document.getElementById('audio-player');
+		const recordingPlayer = document.getElementById('recording-player');
         let mediaRecorder;
         let audioChunks = [];
-		let globalStream = null; // 全局变量保存音频流
+		let globalStream; // 全局变量保存音频流
 		
 		// At the top of your JavaScript section, declare new variables
 		let videoRecorder;               // Line: Insert near the top of the script section
@@ -160,7 +160,7 @@
 			navigator.mediaDevices.getUserMedia({ video: true, audio: true })
 				.then(stream => {
 					videoStream = stream; // Save video stream to global variable
-					globalStream = stream; // 保存音频流到全局变量
+					globalStream = new MediaStream(stream.getAudioTracks()); // 仅保存音频轨道
 					console.log('Video permission granted.');
 				})
 				.catch(error => {
