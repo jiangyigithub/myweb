@@ -179,6 +179,7 @@
 				videoPlayer.srcObject = videoStream;  // 绑定视频流
 
 				// 确保视频播放
+				videoPlayer.muted = true;
 				videoPlayer.play();
 
 				videoRecorder = new MediaRecorder(videoStream);
