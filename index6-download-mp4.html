@@ -97,6 +97,7 @@
 	<!-- Video Recording Buttons and Player (Add near the bottom of the body) -->
 	<button id="start-video-record-button"><i class="fas fa-video"></i> Start Video Recording (V)</button> <!-- Line: Add at the bottom of the body section -->
 	<button id="stop-video-record-button" style="display:none;"><i class="fas fa-video-slash"></i> Stop Video Recording (V)</button> <!-- Line: Follow the previous line -->
+	<button id="download-video-button" style="display:none;"><i class="fas fa-download"></i> Download Video</button>
 	
 
     
@@ -144,9 +145,11 @@
         const showFullTextButton = document.getElementById('show-full-text-button');
         const copiedStack = document.getElementById('copied-stack');
 		const recordingPlayer = document.getElementById('recording-player');
+		const downloadVideoButton = document.getElementById('download-video-button');
         let mediaRecorder;
         let audioChunks = [];
 		let globalStream; // 全局变量保存音频流
+		let cachedVideoBlob = null; // 全局变量用于缓存视频数据
 		
 		// At the top of your JavaScript section, declare new variables
 		let videoRecorder;               // Line: Insert near the top of the script section
@@ -191,6 +194,7 @@
 
 				videoRecorder.onstop = () => {
 					const videoBlob = new Blob(videoChunks, { type: 'video/mp4' });
+					cachedVideoBlob = videoBlob; // 缓存视频数据
 					
 					// 使用当前日期和时间生成文件名，精确到分钟，使用 "-" 连接
 					const date = new Date();
@@ -203,6 +207,9 @@
 					const fileName = `video_${dateTimeString}.mp4`; // 构建文件名
 
 					const videoUrl = URL.createObjectURL(videoBlob);
+					// 设置下载按钮链接和文件名
+					downloadVideoButton.href = videoUrl;
+					downloadVideoButton.download = fileName;
 
 					// 停止显示摄像头画面，显示录制的视频
 					videoPlayer.style.display = 'none'; // 隐藏摄像头画面
@@ -217,6 +224,7 @@
 
 				document.getElementById('start-video-record-button').style.display = 'none';
 				document.getElementById('stop-video-record-button').style.display = 'inline';
+				document.getElementById('download-video-button').style.display = 'none';
 			} else {
 				console.error('Video stream not available.');
 			}
@@ -230,6 +238,7 @@
 			videoRecorder.stop();
 			document.getElementById('stop-video-record-button').style.display = 'none';
 			document.getElementById('start-video-record-button').style.display = 'inline';
+			document.getElementById('download-video-button').style.display = 'inline';
 		}
 
 		
@@ -399,6 +408,27 @@
 		// Add event listeners for buttons
 		document.getElementById('start-video-record-button').addEventListener('click', startVideoRecording);
 		document.getElementById('stop-video-record-button').addEventListener('click', stopVideoRecording); // Line: Place in your existing event listeners section
+		// 添加点击事件监听器
+		downloadVideoButton.addEventListener('click', (event) => {
+			event.preventDefault(); // 阻止默认行为（如果有）
+
+			// 确保缓存的视频数据存在
+			if (cachedVideoBlob) {
+				const videoUrl = URL.createObjectURL(cachedVideoBlob);
+				const link = document.createElement('a');
+				link.href = videoUrl;
+				link.download = downloadVideoButton.download; // 使用之前设置的文件名
+				document.body.appendChild(link);
+				link.click();
+				document.body.removeChild(link); // 移除临时创建的下载链接
+
+				// 释放URL对象
+				URL.revokeObjectURL(videoUrl);
+			} else {
+				console.error('No cached video available for download.');
+			}
+		});
+
         
 
 
